@@ -28,6 +28,8 @@ async function run() {
     await client.connect();
 
     const coffeeCollaction = client.db("coffeeDB").collection("coffee");
+    const userCollaction = client.db("coffeeDB").collection("users");
+
     app.get("/coffee", async (req, res) => {
       const coffee = coffeeCollaction.find();
       const result = await coffee.toArray();
@@ -73,6 +75,55 @@ async function run() {
       const result = await coffeeCollaction.deleteOne(query);
       res.send(result);
     });
+
+    // users releted apis
+
+    app.get("/users", async (req, res) => {
+      const users = userCollaction.find();
+      const result = await users.toArray();
+      res.send(result);
+    });
+
+    app.post("/users", async (req, res) => {
+      const newUsers = req.body;
+      const result = await userCollaction.insertOne(newUsers);
+      res.send(result);
+    });
+
+    app.patch("/users", async (req, res) => {
+      const email = req.body.email;
+      const filter = { email };
+      const updateDoc = {
+        $set: {
+          lastSignInTime: req.body?.lastSignInTime,
+        },
+      };
+      const result = await userCollaction.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateUser = req.body;
+      const user = {
+        $set: {
+          name: updateUser.name,
+          email: updateUser.email,
+        },
+      };
+      const result = await userCollaction.updateOne(filter.user.options);
+      res.send(result);
+    });
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollaction.deleteOne(query);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
